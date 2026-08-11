@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover" />
+  <meta name="theme-color" content="#f7a8bd" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Dango" />
+  <meta name="format-detection" content="telephone=no" />
+  <title>Dango — Room Layout Planner</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icon/apple-touch-icon.png" />
+  <link rel="icon" href="icon/favicon-32.png" sizes="32x32" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="topbar">
+      <button class="icon-btn" id="menuBtn" aria-label="Open menu">☰</button>
+      <div class="brand">
+        <img src="icon/icon-192.png" alt="" class="brand-icon" />
+        <div>
+          <div class="brand-title">Dango</div>
+          <div class="brand-subtitle" id="projectSubtitle">Room Layout Planner</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <button class="icon-btn" id="undoBtn" aria-label="Undo">↶</button>
+        <button class="icon-btn" id="redoBtn" aria-label="Redo">↷</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section id="roomsView" class="view active">
+        <div class="hero-card">
+          <div>
+            <span class="eyebrow">🍡 Arrange it until it fits</span>
+            <h1>Your rooms, made simple.</h1>
+            <p>Build a measured 2D room, add furniture and fixtures, then test different layouts before moving anything.</p>
+          </div>
+          <button class="primary-btn" id="newRoomHeroBtn">＋ New room</button>
+        </div>
+
+        <div class="section-head">
+          <div>
+            <h2>Rooms</h2>
+            <p id="roomCountLabel">0 saved rooms</p>
+          </div>
+          <div class="segmented compact" id="roomFilter">
+            <button data-filter="all" class="active">All</button>
+            <button data-filter="starred">Starred</button>
+          </div>
+        </div>
+        <div id="roomsGrid" class="rooms-grid"></div>
+      </section>
+
+      <section id="planView" class="view planner-view">
+        <div class="planner-toolbar">
+          <button class="tool-btn" data-tool="select" aria-pressed="true">✋<span>Select</span></button>
+          <button class="tool-btn" data-action="addObject">＋<span>Add</span></button>
+          <button class="tool-btn" data-action="addDoor">🚪<span>Door</span></button>
+          <button class="tool-btn" data-action="addWindow">▭<span>Window</span></button>
+          <button class="tool-btn" data-action="measure">📏<span>Measure</span></button>
+          <button class="tool-btn" data-action="layers">▱<span>Layers</span></button>
+        </div>
+
+        <div class="canvas-wrap" id="canvasWrap">
+          <div class="zoom-stack">
+            <button id="zoomInBtn" class="mini-btn">＋</button>
+            <button id="fitBtn" class="mini-btn">⌂</button>
+            <button id="zoomOutBtn" class="mini-btn">−</button>
+          </div>
+          <div class="status-pill" id="saveStatus">Saved</div>
+          <svg id="planCanvas" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Room plan"></svg>
+        </div>
+
+        <div class="planner-bottom">
+          <button class="bottom-action" id="layoutBtn">🅰️<span>Layouts</span></button>
+          <button class="bottom-action" id="issuesBtn">⚠️<span>Issues <b id="issueCount">0</b></span></button>
+          <button class="bottom-action" id="previewBtn">👁️<span>Preview</span></button>
+          <button class="bottom-action" id="exportBtn">↗<span>Export</span></button>
+          <button class="bottom-action" id="moreBtn">•••<span>More</span></button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Primary">
+      <button data-view="rooms" class="active">🏠<span>Rooms</span></button>
+      <button data-view="plan">📐<span>Plan</span></button>
+      <button id="quickAddBtn" class="nav-add">＋</button>
+      <button data-action="layoutsNav">🗂️<span>Layouts</span></button>
+      <button data-action="moreNav">•••<span>More</span></button>
+    </nav>
+  </div>
+
+  <div id="drawerBackdrop" class="backdrop hidden"></div>
+  <aside id="drawer" class="drawer hidden" aria-hidden="true">
+    <div class="drawer-head">
+      <div class="brand"><img src="icon/icon-192.png" class="brand-icon" alt=""><div><b>Dango</b><small>Room Layout Planner</small></div></div>
+      <button class="icon-btn" id="closeDrawerBtn">×</button>
+    </div>
+    <button data-drawer-action="rooms">🏠 Rooms</button>
+    <button data-drawer-action="newRoom">＋ New room</button>
+    <button data-drawer-action="objects">🪑 Object library</button>
+    <button data-drawer-action="layouts">🗂️ Layouts</button>
+    <button data-drawer-action="backup">💾 Backup & restore</button>
+    <button data-drawer-action="settings">⚙️ Settings</button>
+    <button data-drawer-action="about">🍡 About Dango</button>
+  </aside>
+
+  <div id="modalRoot"></div>
+  <div id="toast" class="toast" aria-live="polite"></div>
+
+  <template id="modalTemplate">
+    <div class="modal-backdrop">
+      <section class="modal-sheet" role="dialog" aria-modal="true">
+        <header class="modal-head"><h3></h3><button class="icon-btn modal-close">×</button></header>
+        <div class="modal-body"></div>
+      </section>
+    </div>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>

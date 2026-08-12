@@ -20,33 +20,29 @@
       <button class="icon-btn" id="menuBtn" aria-label="Open menu">☰</button>
       <div class="brand">
         <img src="icon/icon-192.png" alt="" class="brand-icon" />
-        <div>
+        <div class="brand-copy">
           <div class="brand-title">Dango</div>
           <div class="brand-subtitle" id="projectSubtitle">Room Layout Planner</div>
         </div>
       </div>
-      <div class="topbar-actions">
-        <button class="icon-btn" id="undoBtn" aria-label="Undo">↶</button>
-        <button class="icon-btn" id="redoBtn" aria-label="Redo">↷</button>
+      <div class="topbar-actions" id="editorHistoryActions">
+        <button class="icon-btn" id="undoBtn" aria-label="Undo" title="Undo">↶</button>
+        <button class="icon-btn" id="redoBtn" aria-label="Redo" title="Redo">↷</button>
       </div>
     </header>
 
     <main class="main">
       <section id="roomsView" class="view active">
-        <div class="hero-card">
+        <div class="rooms-topline">
           <div>
-            <span class="eyebrow">🍡 Arrange it until it fits</span>
-            <h1>Your rooms, made simple.</h1>
-            <p>Build a measured 2D room, add furniture and fixtures, then test different layouts before moving anything.</p>
-          </div>
-          <button class="primary-btn" id="newRoomHeroBtn">＋ New room</button>
-        </div>
-
-        <div class="section-head">
-          <div>
-            <h2>Rooms</h2>
+            <span class="eyebrow">🍡 Room planner</span>
+            <h1>My rooms</h1>
             <p id="roomCountLabel">0 saved rooms</p>
           </div>
+          <button class="primary-btn compact-primary" id="newRoomHeroBtn">＋ New room</button>
+        </div>
+
+        <div class="room-filter-row">
           <div class="segmented compact" id="roomFilter">
             <button data-filter="all" class="active">All</button>
             <button data-filter="starred">Starred</button>
@@ -56,43 +52,35 @@
       </section>
 
       <section id="planView" class="view planner-view">
-        <div class="planner-toolbar">
+        <div class="planner-toolbar" aria-label="Quick planning tools">
           <button class="tool-btn" data-tool="select" aria-pressed="true">✋<span>Select</span></button>
-          <button class="tool-btn" data-action="addObject">＋<span>Add</span></button>
-          <button class="tool-btn" data-action="addDoor">🚪<span>Door</span></button>
-          <button class="tool-btn" data-action="addWindow">▭<span>Window</span></button>
+          <button class="tool-btn" data-action="quickAdd">＋<span>Add</span></button>
           <button class="tool-btn" data-action="measure">📏<span>Measure</span></button>
-          <button class="tool-btn" data-action="zone">▧<span>Zone</span></button>
-          <button class="tool-btn" data-action="layers">▱<span>Layers</span></button>
-          <button class="tool-btn" data-action="insights">✨<span>Insights</span></button>
+          <button class="tool-btn" data-action="insights">✨<span>Fit</span></button>
+          <button class="tool-btn" data-action="layers">▱<span>View</span></button>
         </div>
 
         <div class="canvas-wrap" id="canvasWrap">
           <div class="zoom-stack">
-            <button id="zoomInBtn" class="mini-btn">＋</button>
-            <button id="fitBtn" class="mini-btn">⌂</button>
-            <button id="zoomOutBtn" class="mini-btn">−</button>
+            <button id="zoomInBtn" class="mini-btn" aria-label="Zoom in">＋</button>
+            <button id="fitBtn" class="mini-btn" aria-label="Fit room">⌂</button>
+            <button id="zoomOutBtn" class="mini-btn" aria-label="Zoom out">−</button>
           </div>
-          <div class="status-pill" id="saveStatus">Saved</div>
+          <div class="status-stack">
+            <div class="status-pill" id="saveStatus">Saved</div>
+            <button class="status-pill tappable" id="fitStatus" type="button">Fit —</button>
+            <button class="status-pill tappable issue-status" id="issuesStatus" type="button">0 issues</button>
+          </div>
           <svg id="planCanvas" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Room plan"></svg>
-        </div>
-
-        <div class="planner-bottom">
-          <button class="bottom-action" id="layoutBtn">🅰️<span>Layouts</span></button>
-          <button class="bottom-action" id="issuesBtn">⚠️<span>Issues <b id="issueCount">0</b></span></button>
-          <button class="bottom-action" id="previewBtn">👁️<span>Preview</span></button>
-          <button class="bottom-action" id="exportBtn">↗<span>Export</span></button>
-          <button class="bottom-action" id="moreBtn">•••<span>More</span></button>
         </div>
       </section>
     </main>
 
-    <nav class="bottom-nav" aria-label="Primary">
+    <nav class="bottom-nav" aria-label="Primary navigation">
       <button data-view="rooms" class="active">🏠<span>Rooms</span></button>
       <button data-view="plan">📐<span>Plan</span></button>
-      <button id="quickAddBtn" class="nav-add">＋</button>
+      <button id="quickAddBtn" class="nav-add" aria-label="Add">＋</button>
       <button data-action="layoutsNav">🗂️<span>Layouts</span></button>
-      <button data-action="moreNav">•••<span>More</span></button>
     </nav>
   </div>
 
@@ -100,16 +88,54 @@
   <aside id="drawer" class="drawer hidden" aria-hidden="true">
     <div class="drawer-head">
       <div class="brand"><img src="icon/icon-192.png" class="brand-icon" alt=""><div><b>Dango</b><small>Room Layout Planner</small></div></div>
-      <button class="icon-btn" id="closeDrawerBtn">×</button>
+      <button class="icon-btn" id="closeDrawerBtn" aria-label="Close menu">×</button>
     </div>
-    <button data-drawer-action="rooms">🏠 Rooms</button>
-    <button data-drawer-action="newRoom">＋ New room</button>
-    <button data-drawer-action="objects">🪑 Object library</button>
-    <button data-drawer-action="layouts">🗂️ Layouts</button>
-    <button data-drawer-action="insights">✨ Space insights</button>
-    <button data-drawer-action="backup">💾 Backup & restore</button>
-    <button data-drawer-action="settings">⚙️ Settings</button>
-    <button data-drawer-action="about">🍡 About Dango</button>
+
+    <div class="drawer-scroll">
+      <div class="drawer-section">
+        <div class="drawer-label">Plan</div>
+        <button data-drawer-action="rooms">🏠 <span>Rooms</span></button>
+        <button data-drawer-action="newRoom">＋ <span>New room</span></button>
+        <button data-drawer-action="plan">📐 <span>Current plan</span></button>
+        <button data-drawer-action="layouts">🗂️ <span>Layouts</span></button>
+        <button data-drawer-action="templates">🧩 <span>Room templates</span></button>
+      </div>
+
+      <div class="drawer-section current-room-only">
+        <div class="drawer-label">Add & arrange</div>
+        <button data-drawer-action="quickAdd">＋ <span>Quick add</span></button>
+        <button data-drawer-action="objects">🪑 <span>Furniture & objects</span></button>
+        <button data-drawer-action="openings">🚪 <span>Doors, windows & fixtures</span></button>
+        <button data-drawer-action="zones">▧ <span>Planning zones</span></button>
+        <button data-drawer-action="measure">📏 <span>Measure</span></button>
+        <button data-drawer-action="layers">▱ <span>Layers & display</span></button>
+      </div>
+
+      <div class="drawer-section current-room-only">
+        <div class="drawer-label">Check & decide</div>
+        <button data-drawer-action="insights">✨ <span>Space insights & fit tools</span></button>
+        <button data-drawer-action="issues">⚠️ <span>Issues & clearances</span></button>
+        <button data-drawer-action="readiness">✅ <span>Ready-to-move checklist</span></button>
+        <button data-drawer-action="shopping">🛒 <span>Shopping list</span></button>
+        <button data-drawer-action="remeasure">📐 <span>Re-measure list</span></button>
+        <button data-drawer-action="notes">📝 <span>Room & layout notes</span></button>
+      </div>
+
+      <div class="drawer-section current-room-only">
+        <div class="drawer-label">Project</div>
+        <button data-drawer-action="roomSettings">🏠 <span>Room settings</span></button>
+        <button data-drawer-action="preview">👁️ <span>Clean preview</span></button>
+        <button data-drawer-action="export">↗ <span>Export</span></button>
+      </div>
+
+      <div class="drawer-section">
+        <div class="drawer-label">Dango</div>
+        <button data-drawer-action="backup">💾 <span>Backup & restore</span></button>
+        <button data-drawer-action="storage">🧰 <span>Storage health</span></button>
+        <button data-drawer-action="settings">⚙️ <span>Settings</span></button>
+        <button data-drawer-action="about">🍡 <span>About Dango</span></button>
+      </div>
+    </div>
   </aside>
 
   <div id="modalRoot"></div>
@@ -118,7 +144,7 @@
   <template id="modalTemplate">
     <div class="modal-backdrop">
       <section class="modal-sheet" role="dialog" aria-modal="true">
-        <header class="modal-head"><h3></h3><button class="icon-btn modal-close">×</button></header>
+        <header class="modal-head"><h3></h3><button class="icon-btn modal-close" aria-label="Close">×</button></header>
         <div class="modal-body"></div>
       </section>
     </div>

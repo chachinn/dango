@@ -3,7 +3,7 @@
 
 const STORAGE_KEY = 'dango.app.v5';
 const LEGACY_KEYS = ['dango.app.v4','dango.app.v3','dango.app.v2','dango.app.v1'];
-const APP_VERSION = '5.2.0';
+const APP_VERSION = '5.2.1';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const MAX_HISTORY = 28;
 const $ = (s, root=document) => root.querySelector(s);
@@ -548,7 +548,7 @@ function roomPoints(r=currentRoom()){return normalizeRoomPoints(r?.points,r?.wid
 function polygonArea(points){let a=0;for(let i=0,j=points.length-1;i<points.length;j=i++)a+=(points[j].x+points[i].x)*(points[j].y-points[i].y);return Math.abs(a/2)}
 function roomArea(r=currentRoom()){return r?Math.max(1,polygonArea(roomPoints(r))):1}
 function pointInPolygon(p,poly){let inside=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];const on=Math.abs((p.y-a.y)*(b.x-a.x)-(p.x-a.x)*(b.y-a.y))<.01&&p.x>=Math.min(a.x,b.x)-.01&&p.x<=Math.max(a.x,b.x)+.01&&p.y>=Math.min(a.y,b.y)-.01&&p.y<=Math.max(a.y,b.y)+.01;if(on)return true;const hit=((a.y>p.y)!==(b.y>p.y))&&(p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y||1e-9)+a.x);if(hit)inside=!inside}return inside}
-function rectInsideRoom(o,r=currentRoom()){if(!r)return false;const b=objectBounds(o),pts=[{x:b.x,y:b.y},{x:b.x+b.w,y:b.y},{x:b.x+b.w,y:b.y+b.h},{x:b.x,y:b.y+b.h}];return pts.every(p=>pointInPolygon(p,roomPoints(r)))}
+function rectInsideRoom(o,r=currentRoom()){return boundsInsideUsableRoom(o,r)}
 function polygonSelfIntersects(poly){const orient=(a,b,c)=>Math.sign((b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x));const seg=(a,b,c,d)=>{const o1=orient(a,b,c),o2=orient(a,b,d),o3=orient(c,d,a),o4=orient(c,d,b);return o1!==o2&&o3!==o4};for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length];for(let j=i+1;j<poly.length;j++){if(Math.abs(i-j)<=1||(i===0&&j===poly.length-1))continue;const c=poly[j],d=poly[(j+1)%poly.length];if(seg(a,b,c,d))return true}}return false}
 
 function renderRoomShape(svg,r,g){const pts=roomPoints(r).map(p=>`${g.ox+p.x*g.scale},${g.oy+p.y*g.scale}`).join(' ');svg.appendChild(S('polygon',{points:pts,fill:'#fffdfd',stroke:'#514147','stroke-width':Math.max(3,g.scale*3),'stroke-linejoin':'round','pointer-events':'none'}))}
@@ -865,29 +865,81 @@ function defaultSettings(){return {
   fixtures:true, furniture:true, haptics:true, reduceMotion:false, confirmDelete:true,
   performanceMode:'auto', theme:'pink', workspaceMode:'plan', dragPrecisionV51:true,
   autoFitOnOpen:true, showFitStatus:true, showIssueStatus:true, startupView:'rooms',
-  minimumWalkway:70, precisionHud:true, snapHaptics:true, keepInsideRoom:true
+  minimumWalkway:70, precisionHud:true, snapHaptics:true, keepInsideRoom:true,
+  wallFurnitureGap:0, wallBoundaryV521:false
 }}
 function decimalText(value=''){return String(value??'').replace(/,/g,'.').replace(/[^0-9.+-]/g,'').trim()}
 function decimalNumber(value,fallback=0){const n=Number(decimalText(value));return Number.isFinite(n)?n:fallback}
 function measureInput(name,value,placeholder=''){return `<input type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" spellcheck="false" name="${name}" value="${attr(value??'')}" placeholder="${attr(placeholder)}">`}
+const DANGO_DRAWN_WALL_CM=3;
+function roomInteriorInset(r=currentRoom()){
+  // Room dimensions represent the usable inside dimensions. The SVG wall is drawn
+  // centered on that boundary, so furniture must stop at the wall's inside face.
+  const extra=Math.max(0,Number(state?.settings?.wallFurnitureGap)||0);
+  return DANGO_DRAWN_WALL_CM/2+extra;
+}
+function pointSegmentDistance(p,a,b){
+  const vx=b.x-a.x,vy=b.y-a.y,wx=p.x-a.x,wy=p.y-a.y,len2=vx*vx+vy*vy;
+  if(!len2)return Math.hypot(p.x-a.x,p.y-a.y);
+  const t=clamp((wx*vx+wy*vy)/len2,0,1),qx=a.x+t*vx,qy=a.y+t*vy;
+  return Math.hypot(p.x-qx,p.y-qy);
+}
+function pointInsideUsableRoom(p,r=currentRoom()){
+  if(!r)return false;const poly=roomPoints(r),inset=roomInteriorInset(r);
+  if(!pointInPolygon(p,poly))return false;
+  for(let i=0;i<poly.length;i++)if(pointSegmentDistance(p,poly[i],poly[(i+1)%poly.length])<inset-.01)return false;
+  return true;
+}
+function boundsInsideUsableRoom(o,r=currentRoom()){
+  if(!r)return false;const b=objectBounds(o),samples=[
+    {x:b.x,y:b.y},{x:b.x+b.w,y:b.y},{x:b.x+b.w,y:b.y+b.h},{x:b.x,y:b.y+b.h},
+    {x:b.x+b.w/2,y:b.y},{x:b.x+b.w,y:b.y+b.h/2},{x:b.x+b.w/2,y:b.y+b.h},{x:b.x,y:b.y+b.h/2},
+    {x:b.x+b.w/2,y:b.y+b.h/2}
+  ];return samples.every(p=>pointInsideUsableRoom(p,r));
+}
 function constrainObjectPosition(o,x,y,r=currentRoom()){
   if(!r)return{x,y};
   if(!state.settings.keepInsideRoom)return{x:clamp(x,-o.w*.25,r.width-o.w*.75),y:clamp(y,-o.h*.25,r.height-o.h*.75)};
-  const candidate={...o,x,y};
+  const candidate={...o,x,y},inset=roomInteriorInset(r);
   if(r.shapeType==='rectangle'){
-    let b=objectBounds(candidate),dx=0,dy=0;
-    if(b.w>r.width){dx=r.width/2-(b.x+b.w/2)}else if(b.x<0)dx=-b.x;else if(b.x+b.w>r.width)dx=r.width-(b.x+b.w);
-    if(b.h>r.height){dy=r.height/2-(b.y+b.h/2)}else if(b.y<0)dy=-b.y;else if(b.y+b.h>r.height)dy=r.height-(b.y+b.h);
+    const b=objectBounds(candidate),minX=inset,maxX=r.width-inset,minY=inset,maxY=r.height-inset;let dx=0,dy=0;
+    const usableW=Math.max(0,maxX-minX),usableH=Math.max(0,maxY-minY);
+    if(b.w>usableW){dx=(minX+maxX)/2-(b.x+b.w/2)}else if(b.x<minX)dx=minX-b.x;else if(b.x+b.w>maxX)dx=maxX-(b.x+b.w);
+    if(b.h>usableH){dy=(minY+maxY)/2-(b.y+b.h/2)}else if(b.y<minY)dy=minY-b.y;else if(b.y+b.h>maxY)dy=maxY-(b.y+b.h);
     return{x:x+dx,y:y+dy};
   }
-  if(rectInsideRoom(candidate,r))return{x,y};
+  if(boundsInsideUsableRoom(candidate,r))return{x,y};
   const ox=Number(o.x)||0,oy=Number(o.y)||0;
-  let lo=0,hi=1,best={x:ox,y:oy};
-  for(let i=0;i<12;i++){
-    const t=(lo+hi)/2,c={...o,x:ox+(x-ox)*t,y:oy+(y-oy)*t};
-    if(rectInsideRoom(c,r)){best={x:c.x,y:c.y};lo=t}else hi=t;
+  // If an older saved object was resting on the wall centerline, first find a
+  // nearby valid interior anchor, then preserve smooth movement from there.
+  let anchor={x:ox,y:oy};
+  if(!boundsInsideUsableRoom({...o,x:anchor.x,y:anchor.y},r)){
+    const step=Math.max(1,Math.min(8,Number(state.settings.snapSize)||1));let found=false;
+    for(let rad=step;rad<=Math.max(r.width,r.height)&&!found;rad+=step){
+      for(const [ax,ay] of [[ox-rad,oy],[ox+rad,oy],[ox,oy-rad],[ox,oy+rad],[ox-rad,oy-rad],[ox+rad,oy-rad],[ox-rad,oy+rad],[ox+rad,oy+rad]]){
+        if(boundsInsideUsableRoom({...o,x:ax,y:ay},r)){anchor={x:ax,y:ay};found=true;break}
+      }
+    }
+  }
+  let lo=0,hi=1,best=anchor;
+  for(let i=0;i<14;i++){
+    const t=(lo+hi)/2,c={...o,x:anchor.x+(x-anchor.x)*t,y:anchor.y+(y-anchor.y)*t};
+    if(boundsInsideUsableRoom(c,r)){best={x:c.x,y:c.y};lo=t}else hi=t;
   }
   return best;
+}
+function constrainGroupDelta(group,dx,dy,r=currentRoom()){
+  if(!state.settings.keepInsideRoom||!r||!group?.length)return{dx,dy};
+  const fits=(tdx,tdy)=>group.every(gr=>{const item=objects().find(x=>x.id===gr.id);return item&&boundsInsideUsableRoom({...item,x:gr.origX+tdx,y:gr.origY+tdy},r)});
+  if(fits(dx,dy))return{dx,dy};
+  let lo=0,hi=1,best={dx:0,dy:0};
+  for(let i=0;i<14;i++){const t=(lo+hi)/2,tx=dx*t,ty=dy*t;if(fits(tx,ty)){best={dx:tx,dy:ty};lo=t}else hi=t}
+  return best;
+}
+function normalizeAllRoomsToInterior(){
+  if(!state.settings.keepInsideRoom)return false;let changed=false;const oldRoom=state.currentRoomId,oldLayout=state.currentLayoutId;
+  for(const r of state.rooms||[])for(const l of r.layouts||[])for(const o of l.objects||[]){if(['door','window'].includes(o.type))continue;const beforeX=o.x,beforeY=o.y;const p=constrainObjectPosition(o,o.x,o.y,r);o.x=p.x;o.y=p.y;if(Math.abs(o.x-beforeX)>.01||Math.abs(o.y-beforeY)>.01)changed=true}
+  state.currentRoomId=oldRoom;state.currentLayoutId=oldLayout;return changed;
 }
 function normalizeWithinRoom(o){if(['door','window'].includes(o.type))return;const p=constrainObjectPosition(o,o.x,o.y);o.x=p.x;o.y=p.y}
 function canvasPointerDown(e){
@@ -910,8 +962,9 @@ function objectPointerMove(e){
     return;
   }
   let nx=drag.origX+(p.x-drag.startX)/g.scale,ny=drag.origY+(p.y-drag.startY)/g.scale;const snap=smartSnap(o,nx,ny,drag.snapDisabled);nx=snap.x;ny=snap.y;if(snap.snapped&&!drag.lastSnap&&state.settings.snapHaptics)haptic(4);drag.lastSnap=snap.snapped;
-  const bounded=constrainObjectPosition(o,nx,ny,r);nx=bounded.x;ny=bounded.y;const dx=nx-drag.origX,dy=ny-drag.origY;
-  drag.group.forEach(gr=>{const item=objects().find(x=>x.id===gr.id);if(item){item.x=gr.origX+dx;item.y=gr.origY+dy;if(state.settings.keepInsideRoom&&drag.group.length>1)normalizeWithinRoom(item)}});drag.lastX=nx;drag.lastY=ny;
+  const bounded=constrainObjectPosition(o,nx,ny,r);nx=bounded.x;ny=bounded.y;let dx=nx-drag.origX,dy=ny-drag.origY;
+  if(drag.group.length>1)({dx,dy}=constrainGroupDelta(drag.group,dx,dy,r));
+  drag.group.forEach(gr=>{const item=objects().find(x=>x.id===gr.id);if(item){item.x=gr.origX+dx;item.y=gr.origY+dy}});drag.lastX=drag.origX+dx;drag.lastY=drag.origY+dy;
   if(Math.abs(dx)+Math.abs(dy)>.1){drag.moved=true;clearTimeout(drag.toolsTimer)}pendingDragTransform=drag.group.map(gr=>({element:gr.element,transform:`translate(${(objects().find(x=>x.id===gr.id)?.x-gr.origX||0)*g.scale} ${(objects().find(x=>x.id===gr.id)?.y-gr.origY||0)*g.scale}) ${gr.baseTransform}`}));
   if(!dragFrame)dragFrame=requestAnimationFrame(()=>{dragFrame=0;const list=Array.isArray(pendingDragTransform)?pendingDragTransform:[pendingDragTransform];pendingDragTransform=null;list.filter(Boolean).forEach(q=>{if(q.element?.isConnected)q.element.setAttribute('transform',q.transform)})})
 }
@@ -933,18 +986,20 @@ function selectionAction(a,id){
   const o=objects().find(x=>x.id===id);if(!o)return;if(a==='edit')return editObjectModal(id);if(a==='tools')return selectedToolsModal(id);if(a==='copy'){state.clipboard=deepClone(o);toast('Copied object');return}if(a==='rotate')return rotationModal(id);if(a==='delete'&&state.settings.confirmDelete&&!confirm(`Delete “${o.name}”?`))return;
   snapshot(a==='duplicate'?'Duplicate object':a==='delete'?'Delete object':'Change object');if(a==='duplicate'){const cp=deepClone(o);cp.id=uid('obj');cp.name=`${o.name} Copy`;if(['door','window'].includes(cp.type)){const width=Math.max(cp.w,cp.h),off=wallOffset(cp)+15;positionWallOpening(cp,cp.wall,width,off)}else{cp.x+=15;cp.y+=15;normalizeWithinRoom(cp)}objects().push(cp);state.selectedId=cp.id}else if(a==='lock')o.locked=!o.locked;else if(a==='delete'){const group=o.groupId?objects().filter(x=>x.groupId===o.groupId):[o];group.forEach(g=>{const i=objects().findIndex(x=>x.id===g.id);if(i>=0)objects().splice(i,1)});state.selectedId=null}currentLayout().updatedAt=now();persist();renderPlan(true)
 }
-function layersModal(){const s=state.settings;modal('Layers & display',`<div class="field"><label>Workspace mode</label><div class="mode-row"><button class="mode-btn ${s.workspaceMode==='plan'?'active':''}" data-mode="plan">Plan</button><button class="mode-btn ${s.workspaceMode==='precision'?'active':''}" data-mode="precision">Precision</button><button class="mode-btn ${s.workspaceMode==='clean'?'active':''}" data-mode="clean">Clean</button></div></div><div class="switch-row"><span>🧲 Keep objects fully inside room</span><input class="switch" id="layerKeepInside" type="checkbox" ${s.keepInsideRoom?'checked':''}></div><div class="switch-row"><span>▦ Grid</span><input class="switch" data-k="grid" type="checkbox" ${s.grid?'checked':''}></div><div class="switch-row"><span>🪑 Furniture</span><input class="switch" data-k="furniture" type="checkbox" ${s.furniture?'checked':''}></div><div class="switch-row"><span>🚪 Fixtures</span><input class="switch" data-k="fixtures" type="checkbox" ${s.fixtures?'checked':''}></div><div class="switch-row"><span>▧ Planning zones</span><input class="switch" data-k="zones" type="checkbox" ${s.zones?'checked':''}></div><div class="switch-row"><span>📏 Measurements</span><input class="switch" data-k="measurements" type="checkbox" ${s.measurements?'checked':''}></div><div class="switch-row"><span>🏷 Object labels</span><input class="switch" data-k="labels" type="checkbox" ${s.labels?'checked':''}></div><div class="switch-row"><span>📐 Dimensions</span><input class="switch" data-k="dimensions" type="checkbox" ${s.dimensions?'checked':''}></div><div class="switch-row"><span>↔️ Clearance areas</span><input class="switch" data-k="clearances" type="checkbox" ${s.clearances?'checked':''}></div><div class="form-actions"><button class="secondary-btn" id="clearMeasurements">Clear measurements</button></div>`,m=>{$$('[data-mode]',m).forEach(b=>b.onclick=()=>{applyWorkspaceMode(b.dataset.mode);m.remove()});$('#layerKeepInside',m).onchange=e=>{state.settings.keepInsideRoom=e.target.checked;if(e.target.checked){objects().filter(o=>!['door','window'].includes(o.type)).forEach(normalizeWithinRoom)}persist();renderPlan(true)};$$('[data-k]',m).forEach(i=>i.onchange=()=>{state.settings[i.dataset.k]=i.checked;state.settings.workspaceMode='custom';persist();renderPlan()});$('#clearMeasurements',m).onclick=()=>{snapshot();currentLayout().measurements=[];state.measureDraft=null;persist();renderPlan();m.remove();toast('Measurements cleared')}})}
+function layersModal(){const s=state.settings;modal('Layers & display',`<div class="field"><label>Workspace mode</label><div class="mode-row"><button class="mode-btn ${s.workspaceMode==='plan'?'active':''}" data-mode="plan">Plan</button><button class="mode-btn ${s.workspaceMode==='precision'?'active':''}" data-mode="precision">Precision</button><button class="mode-btn ${s.workspaceMode==='clean'?'active':''}" data-mode="clean">Clean</button></div></div><div class="switch-row"><span>🧲 Keep objects fully inside room</span><input class="switch" id="layerKeepInside" type="checkbox" ${s.keepInsideRoom?'checked':''}></div><div class="field"><label>Extra furniture-to-wall gap (cm)</label>${measureInput('layerWallGap',Number(s.wallFurnitureGap||0).toFixed(1))}<small class="help">0 means furniture may touch the inside face of the wall, but never overlap the wall itself.</small></div><div class="switch-row"><span>▦ Grid</span><input class="switch" data-k="grid" type="checkbox" ${s.grid?'checked':''}></div><div class="switch-row"><span>🪑 Furniture</span><input class="switch" data-k="furniture" type="checkbox" ${s.furniture?'checked':''}></div><div class="switch-row"><span>🚪 Fixtures</span><input class="switch" data-k="fixtures" type="checkbox" ${s.fixtures?'checked':''}></div><div class="switch-row"><span>▧ Planning zones</span><input class="switch" data-k="zones" type="checkbox" ${s.zones?'checked':''}></div><div class="switch-row"><span>📏 Measurements</span><input class="switch" data-k="measurements" type="checkbox" ${s.measurements?'checked':''}></div><div class="switch-row"><span>🏷 Object labels</span><input class="switch" data-k="labels" type="checkbox" ${s.labels?'checked':''}></div><div class="switch-row"><span>📐 Dimensions</span><input class="switch" data-k="dimensions" type="checkbox" ${s.dimensions?'checked':''}></div><div class="switch-row"><span>↔️ Clearance areas</span><input class="switch" data-k="clearances" type="checkbox" ${s.clearances?'checked':''}></div><div class="form-actions"><button class="secondary-btn" id="clearMeasurements">Clear measurements</button></div>`,m=>{$$('[data-mode]',m).forEach(b=>b.onclick=()=>{applyWorkspaceMode(b.dataset.mode);m.remove()});$('#layerKeepInside',m).onchange=e=>{state.settings.keepInsideRoom=e.target.checked;if(e.target.checked){objects().filter(o=>!['door','window'].includes(o.type)).forEach(normalizeWithinRoom)}persist();renderPlan(true)};$('[name="layerWallGap"]',m).onchange=e=>{state.settings.wallFurnitureGap=Math.max(0,decimalNumber(e.target.value,0));if(state.settings.keepInsideRoom)objects().filter(o=>!['door','window'].includes(o.type)).forEach(normalizeWithinRoom);persist();renderPlan(true)};$$('[data-k]',m).forEach(i=>i.onchange=()=>{state.settings[i.dataset.k]=i.checked;state.settings.workspaceMode='custom';persist();renderPlan()});$('#clearMeasurements',m).onclick=()=>{snapshot();currentLayout().measurements=[];state.measureDraft=null;persist();renderPlan();m.remove();toast('Measurements cleared')}})}
 function settingsModal(){
-  const s=state.settings;modal('Settings',`<div class="field"><label>Theme</label><select id="settingTheme"><option value="pink" ${s.theme==='pink'?'selected':''}>Dango pink</option><option value="lavender" ${s.theme==='lavender'?'selected':''}>Lavender</option><option value="peach" ${s.theme==='peach'?'selected':''}>Peach</option><option value="sage" ${s.theme==='sage'?'selected':''}>Sage</option><option value="cream" ${s.theme==='cream'?'selected':''}>Cream</option></select></div><div class="field"><label>Default display unit</label><select id="settingUnit">${Object.keys(UNIT).map(k=>`<option value="${k}" ${k===s.unit?'selected':''}>${UNIT[k].label}</option>`).join('')}</select></div><div class="field"><label>Performance</label><select id="settingPerformance"><option value="auto" ${s.performanceMode==='auto'?'selected':''}>Automatic — recommended</option><option value="performance" ${s.performanceMode==='performance'?'selected':''}>Smoothness first</option><option value="detail" ${s.performanceMode==='detail'?'selected':''}>Visual detail first</option></select></div><div class="field"><label>Startup screen</label><select id="settingStartup"><option value="rooms" ${s.startupView!=='last'?'selected':''}>Rooms</option><option value="last" ${s.startupView==='last'?'selected':''}>Last open plan</option></select></div><div class="switch-row"><span>Keep objects fully inside room</span><input type="checkbox" class="switch" id="settingKeepInside" ${s.keepInsideRoom?'checked':''}></div><div class="switch-row"><span>Grid</span><input type="checkbox" class="switch" id="settingGrid" ${s.grid?'checked':''}></div><div class="switch-row"><span>Snap to grid</span><input type="checkbox" class="switch" id="settingSnap" ${s.snap?'checked':''}></div><div class="switch-row"><span>Snap to walls</span><input type="checkbox" class="switch" id="settingWallSnap" ${s.wallSnap?'checked':''}></div><div class="switch-row"><span>Snap to other objects</span><input type="checkbox" class="switch" id="settingObjectSnap" ${s.objectSnap?'checked':''}></div><div class="switch-row"><span>Snap haptics</span><input type="checkbox" class="switch" id="settingSnapHaptics" ${s.snapHaptics?'checked':''}></div><div class="field"><label>Snap size (cm)</label>${measureInput('settingSnapSize',s.snapSize)}</div><div class="field"><label>Minimum preferred walkway (cm)</label>${measureInput('settingWalkway',s.minimumWalkway||70)}</div><div class="switch-row"><span>Precision HUD</span><input type="checkbox" class="switch" id="settingPrecisionHud" ${s.precisionHud?'checked':''}></div><div class="switch-row"><span>Show Fit status on plan</span><input type="checkbox" class="switch" id="settingFitStatus" ${s.showFitStatus?'checked':''}></div><div class="switch-row"><span>Show issue count on plan</span><input type="checkbox" class="switch" id="settingIssueStatus" ${s.showIssueStatus?'checked':''}></div><div class="switch-row"><span>Haptics</span><input type="checkbox" class="switch" id="settingHaptics" ${s.haptics?'checked':''}></div><div class="switch-row"><span>Confirm before deleting</span><input type="checkbox" class="switch" id="settingConfirmDelete" ${s.confirmDelete?'checked':''}></div><div class="switch-row"><span>Reduce motion</span><input type="checkbox" class="switch" id="settingReduceMotion" ${s.reduceMotion?'checked':''}></div><div class="form-actions"><button class="secondary-btn" id="showOnboarding">Show getting started</button><button class="primary-btn" id="saveSettings">Save settings</button></div>`,m=>{
-    $('#showOnboarding',m).onclick=()=>{m.remove();onboardingModal(false)};$('#saveSettings',m).onclick=()=>{Object.assign(state.settings,{theme:$('#settingTheme',m).value,unit:$('#settingUnit',m).value,performanceMode:$('#settingPerformance',m).value,startupView:$('#settingStartup',m).value,keepInsideRoom:$('#settingKeepInside',m).checked,grid:$('#settingGrid',m).checked,snap:$('#settingSnap',m).checked,wallSnap:$('#settingWallSnap',m).checked,objectSnap:$('#settingObjectSnap',m).checked,snapHaptics:$('#settingSnapHaptics',m).checked,snapSize:clamp(decimalNumber($('[name="settingSnapSize"]',m).value,1),.1,100),minimumWalkway:clamp(decimalNumber($('[name="settingWalkway"]',m).value,70),1,500),precisionHud:$('#settingPrecisionHud',m).checked,showFitStatus:$('#settingFitStatus',m).checked,showIssueStatus:$('#settingIssueStatus',m).checked,haptics:$('#settingHaptics',m).checked,confirmDelete:$('#settingConfirmDelete',m).checked,reduceMotion:$('#settingReduceMotion',m).checked});if(state.settings.keepInsideRoom)objects().filter(o=>!['door','window'].includes(o.type)).forEach(normalizeWithinRoom);state.settings.workspaceMode='custom';applyAppearance();persist();m.remove();renderAll();toast('Settings saved')}
+  const s=state.settings;modal('Settings',`<div class="field"><label>Theme</label><select id="settingTheme"><option value="pink" ${s.theme==='pink'?'selected':''}>Dango pink</option><option value="lavender" ${s.theme==='lavender'?'selected':''}>Lavender</option><option value="peach" ${s.theme==='peach'?'selected':''}>Peach</option><option value="sage" ${s.theme==='sage'?'selected':''}>Sage</option><option value="cream" ${s.theme==='cream'?'selected':''}>Cream</option></select></div><div class="field"><label>Default display unit</label><select id="settingUnit">${Object.keys(UNIT).map(k=>`<option value="${k}" ${k===s.unit?'selected':''}>${UNIT[k].label}</option>`).join('')}</select></div><div class="field"><label>Performance</label><select id="settingPerformance"><option value="auto" ${s.performanceMode==='auto'?'selected':''}>Automatic — recommended</option><option value="performance" ${s.performanceMode==='performance'?'selected':''}>Smoothness first</option><option value="detail" ${s.performanceMode==='detail'?'selected':''}>Visual detail first</option></select></div><div class="field"><label>Startup screen</label><select id="settingStartup"><option value="rooms" ${s.startupView!=='last'?'selected':''}>Rooms</option><option value="last" ${s.startupView==='last'?'selected':''}>Last open plan</option></select></div><div class="switch-row"><span><b>Keep objects fully inside room</b><small>Furniture stops at the inside face of the wall, not on top of the wall line.</small></span><input type="checkbox" class="switch" id="settingKeepInside" ${s.keepInsideRoom?'checked':''}></div><div class="field"><label>Extra furniture-to-wall gap (cm)</label>${measureInput('settingWallGap',Number(s.wallFurnitureGap||0).toFixed(1))}<small class="help">Set 0 to allow furniture to sit flush against the inside face of the wall.</small></div><div class="switch-row"><span>Grid</span><input type="checkbox" class="switch" id="settingGrid" ${s.grid?'checked':''}></div><div class="switch-row"><span>Snap to grid</span><input type="checkbox" class="switch" id="settingSnap" ${s.snap?'checked':''}></div><div class="switch-row"><span>Snap to walls</span><input type="checkbox" class="switch" id="settingWallSnap" ${s.wallSnap?'checked':''}></div><div class="switch-row"><span>Snap to other objects</span><input type="checkbox" class="switch" id="settingObjectSnap" ${s.objectSnap?'checked':''}></div><div class="switch-row"><span>Snap haptics</span><input type="checkbox" class="switch" id="settingSnapHaptics" ${s.snapHaptics?'checked':''}></div><div class="field"><label>Snap size (cm)</label>${measureInput('settingSnapSize',s.snapSize)}</div><div class="field"><label>Minimum preferred walkway (cm)</label>${measureInput('settingWalkway',s.minimumWalkway||70)}</div><div class="switch-row"><span>Precision HUD</span><input type="checkbox" class="switch" id="settingPrecisionHud" ${s.precisionHud?'checked':''}></div><div class="switch-row"><span>Show Fit status on plan</span><input type="checkbox" class="switch" id="settingFitStatus" ${s.showFitStatus?'checked':''}></div><div class="switch-row"><span>Show issue count on plan</span><input type="checkbox" class="switch" id="settingIssueStatus" ${s.showIssueStatus?'checked':''}></div><div class="switch-row"><span>Haptics</span><input type="checkbox" class="switch" id="settingHaptics" ${s.haptics?'checked':''}></div><div class="switch-row"><span>Confirm before deleting</span><input type="checkbox" class="switch" id="settingConfirmDelete" ${s.confirmDelete?'checked':''}></div><div class="switch-row"><span>Reduce motion</span><input type="checkbox" class="switch" id="settingReduceMotion" ${s.reduceMotion?'checked':''}></div><div class="form-actions"><button class="secondary-btn" id="showOnboarding">Show getting started</button><button class="primary-btn" id="saveSettings">Save settings</button></div>`,m=>{
+    $('#showOnboarding',m).onclick=()=>{m.remove();onboardingModal(false)};$('#saveSettings',m).onclick=()=>{Object.assign(state.settings,{theme:$('#settingTheme',m).value,unit:$('#settingUnit',m).value,performanceMode:$('#settingPerformance',m).value,startupView:$('#settingStartup',m).value,keepInsideRoom:$('#settingKeepInside',m).checked,wallFurnitureGap:Math.max(0,decimalNumber($('[name="settingWallGap"]',m).value,0)),grid:$('#settingGrid',m).checked,snap:$('#settingSnap',m).checked,wallSnap:$('#settingWallSnap',m).checked,objectSnap:$('#settingObjectSnap',m).checked,snapHaptics:$('#settingSnapHaptics',m).checked,snapSize:clamp(decimalNumber($('[name="settingSnapSize"]',m).value,1),.1,100),minimumWalkway:clamp(decimalNumber($('[name="settingWalkway"]',m).value,70),1,500),precisionHud:$('#settingPrecisionHud',m).checked,showFitStatus:$('#settingFitStatus',m).checked,showIssueStatus:$('#settingIssueStatus',m).checked,haptics:$('#settingHaptics',m).checked,confirmDelete:$('#settingConfirmDelete',m).checked,reduceMotion:$('#settingReduceMotion',m).checked});if(state.settings.keepInsideRoom)objects().filter(o=>!['door','window'].includes(o.type)).forEach(normalizeWithinRoom);state.settings.workspaceMode='custom';applyAppearance();persist();m.remove();renderAll();toast('Settings saved')}
   })
 }
 
 function bootDango(){
   try{
     state=loadState();
+    if(!state.settings.wallBoundaryV521){normalizeAllRoomsToInterior();state.settings.wallBoundaryV521=true;}
     wire();
     renderAll();
+    persist(0);
     recoverFromIDB().then(()=>maybeShowOnboarding()).catch(err=>console.warn('Dango recovery check failed:',err));
     registerSW();
   }catch(err){

@@ -1,9 +1,9 @@
-const CACHE = 'dango-shell-v5.2.1';
+const CACHE = 'dango-shell-v5.2.2';
 const SHELL = [
-  './', './index.html', './style.css', './app.js', './manifest.json',
+  './', './index.html', './style.css', './app.js', './hotfix.js', './manifest.json',
   './icon/icon-192.png', './icon/icon-512.png', './icon/apple-touch-icon.png'
 ];
-const CORE_PATHS = new Set(['/index.html','/style.css','/app.js','/manifest.json']);
+const CORE_PATHS = new Set(['/index.html','/style.css','/app.js','/hotfix.js','/manifest.json']);
 
 self.addEventListener('install', event => {
   event.waitUntil(

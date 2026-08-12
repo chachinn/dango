@@ -134,3 +134,10 @@ body.modal-open{overflow:hidden}
 .tool-section-title{margin:14px 0 7px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9a7d86;font-weight:900}
 .compact-stat{display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:13px;background:#fff}.compact-stat span{font-size:10px;color:var(--muted)}.compact-stat b{font-size:11px;text-align:right}
 @media(max-width:360px){.bottom-nav{padding-inline:2px}.bottom-nav button{font-size:17px}.bottom-nav button span{font-size:9px}.bottom-nav .nav-add{width:50px;height:50px}.feature-hub-grid{grid-template-columns:1fr 1fr}}
+
+/* Build 5.1 — easier direct placement */
+#planCanvas [data-id]{-webkit-tap-highlight-color:transparent}
+body.dragging #planCanvas [data-id]{cursor:grabbing!important}
+.door-preset-row{display:flex;gap:7px;flex-wrap:wrap}
+.door-size-chip{border:1px solid var(--line);background:#fffafa;color:var(--muted);border-radius:999px;padding:8px 10px;font-size:10px;font-weight:800;touch-action:manipulation}
+.door-size-chip.active{background:var(--pink-3);border-color:var(--pink);color:var(--rose)}

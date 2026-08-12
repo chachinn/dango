@@ -1,4 +1,4 @@
-const CACHE = 'dango-shell-v5.1.1';
+const CACHE = 'dango-shell-v5.2.0';
 const SHELL = [
   './', './index.html', './style.css', './app.js', './manifest.json',
   './icon/icon-192.png', './icon/icon-512.png', './icon/apple-touch-icon.png'

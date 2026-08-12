@@ -77,10 +77,11 @@
     </main>
 
     <nav class="bottom-nav" aria-label="Primary navigation">
-      <button data-view="rooms" class="active">🏠<span>Rooms</span></button>
-      <button data-view="plan">📐<span>Plan</span></button>
-      <button id="quickAddBtn" class="nav-add" aria-label="Add">＋</button>
-      <button data-action="layoutsNav">🗂️<span>Layouts</span></button>
+      <button data-view="rooms" class="active" aria-label="Rooms">🏠<span>Rooms</span></button>
+      <button data-view="plan" aria-label="Plan">📐<span>Plan</span></button>
+      <button id="quickAddBtn" class="nav-add" aria-label="Add to room">＋</button>
+      <button data-action="layoutsNav" aria-label="Layouts">🗂️<span>Layouts</span></button>
+      <button data-action="checkNav" aria-label="Check layout">✨<span>Check</span></button>
     </nav>
   </div>
 
@@ -98,46 +99,68 @@
         <button data-drawer-action="newRoom">＋ <span>New room</span></button>
         <button data-drawer-action="plan">📐 <span>Current plan</span></button>
         <button data-drawer-action="layouts">🗂️ <span>Layouts</span></button>
+        <button data-drawer-action="compareLayouts">🅰️ <span>Compare layouts</span></button>
         <button data-drawer-action="templates">🧩 <span>Room templates</span></button>
         <button data-drawer-action="roomShape">📐 <span>Walls & room shape</span></button>
+        <button data-drawer-action="wholeHome">🏡 <span>Whole home</span></button>
       </div>
 
       <div class="drawer-section current-room-only">
-        <div class="drawer-label">Add & arrange</div>
+        <div class="drawer-label">Add</div>
         <button data-drawer-action="quickAdd">＋ <span>Quick add</span></button>
         <button data-drawer-action="objects">🪑 <span>Furniture & objects</span></button>
+        <button data-drawer-action="customObject">⬜ <span>Custom object</span></button>
+        <button data-drawer-action="myObjects">💗 <span>My Objects</span></button>
         <button data-drawer-action="openings">🚪 <span>Doors, windows & fixtures</span></button>
-        <button data-drawer-action="zones">▧ <span>Planning zones</span></button>
-        <button data-drawer-action="measure">📏 <span>Measure</span></button>
+        <button data-drawer-action="fixedFeatures">🔌 <span>Fixed features</span></button>
+        <button data-drawer-action="zones">▧ <span>Planning & keep-clear zones</span></button>
+      </div>
+
+      <div class="drawer-section current-room-only">
+        <div class="drawer-label">Arrange</div>
+        <button data-drawer-action="objectList">🗂️ <span>Object list & search</span></button>
+        <button data-drawer-action="selectedTools">✨ <span>Selected object tools</span></button>
+        <button data-drawer-action="align">↔️ <span>Group, align & distribute</span></button>
+        <button data-drawer-action="states">🛋️ <span>Furniture open / closed states</span></button>
+        <button data-drawer-action="clearancePresets">↔️ <span>Clearance presets</span></button>
+        <button data-drawer-action="measure">📏 <span>Measurements</span></button>
+        <button data-drawer-action="walkingPath">👣 <span>Walking path check</span></button>
         <button data-drawer-action="layers">▱ <span>Layers & display</span></button>
+        <button data-drawer-action="precision">🎯 <span>Precision tools</span></button>
       </div>
 
       <div class="drawer-section current-room-only">
         <div class="drawer-label">Check & decide</div>
-        <button data-drawer-action="insights">✨ <span>Space insights & fit tools</span></button>
+        <button data-drawer-action="checkHub">✨ <span>Check dashboard</span></button>
+        <button data-drawer-action="insights">🍡 <span>Space insights & Dango Fit</span></button>
+        <button data-drawer-action="whereFit">📍 <span>Where can this fit?</span></button>
+        <button data-drawer-action="whatFits">🧩 <span>What fits here?</span></button>
         <button data-drawer-action="oneImprovement">💡 <span>One improvement</span></button>
-        <button data-drawer-action="walkingPath">👣 <span>Walking path check</span></button>
+        <button data-drawer-action="fitDoor">🚪 <span>Will it fit through the door?</span></button>
+        <button data-drawer-action="heightPlanner">↕️ <span>Height planner</span></button>
+        <button data-drawer-action="cablePlanner">🔌 <span>Cables & outlets</span></button>
         <button data-drawer-action="issues">⚠️ <span>Issues & clearances</span></button>
         <button data-drawer-action="readiness">✅ <span>Ready-to-move checklist</span></button>
-        <button data-drawer-action="shopping">🛒 <span>Shopping list</span></button>
         <button data-drawer-action="remeasure">📐 <span>Re-measure list</span></button>
-        <button data-drawer-action="notes">📝 <span>Room & layout notes</span></button>
       </div>
 
       <div class="drawer-section current-room-only">
         <div class="drawer-label">Project</div>
+        <button data-drawer-action="notes">📝 <span>Room & layout notes</span></button>
+        <button data-drawer-action="shopping">🛒 <span>Shopping list</span></button>
+        <button data-drawer-action="moving">📦 <span>Moving mode</span></button>
+        <button data-drawer-action="movingAccess">🚚 <span>Moving access measurements</span></button>
         <button data-drawer-action="roomSettings">🏠 <span>Room settings</span></button>
         <button data-drawer-action="preview">👁️ <span>Clean preview</span></button>
-        <button data-drawer-action="export">↗ <span>Export</span></button>
+        <button data-drawer-action="export">↗ <span>Export & share</span></button>
       </div>
 
       <div class="drawer-section">
         <div class="drawer-label">Dango</div>
-        <button data-drawer-action="wholeHome">🏡 <span>Whole home</span></button>
-        <button data-drawer-action="moving">📦 <span>Moving mode</span></button>
         <button data-drawer-action="backup">💾 <span>Backup & restore</span></button>
         <button data-drawer-action="storage">🧰 <span>Storage health</span></button>
-        <button data-drawer-action="settings">⚙️ <span>Settings</span></button>
+        <button data-drawer-action="settings">⚙️ <span>Settings & personalization</span></button>
+        <button data-drawer-action="onboarding">👋 <span>How to use Dango</span></button>
         <button data-drawer-action="about">🍡 <span>About Dango</span></button>
       </div>
     </div>

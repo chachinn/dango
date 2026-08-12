@@ -57,7 +57,7 @@ body{touch-action:manipulation}
 .status-pill.tappable{border:1px solid var(--line);cursor:pointer;color:var(--ink);font-weight:750}
 .status-pill.issue-status.has-issues{background:#fff0f3;color:#b84d68;border-color:#ffd0db}
 .status-pill.good{background:#f0f8ef;color:#5b7852;border-color:#dcebd7}
-.bottom-nav{height:calc(var(--nav-h) + var(--safe-bottom));grid-template-columns:repeat(4,1fr);padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
+.bottom-nav{height:calc(var(--nav-h) + var(--safe-bottom));grid-template-columns:repeat(5,1fr);padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right))}
 .bottom-nav .nav-add{width:50px;height:50px;border-radius:18px}
 .drawer{padding-left:0;padding-right:0;gap:0;overflow:hidden}
 .drawer-head{padding:0 12px 10px;margin:0;border-bottom:1px solid var(--line)}
@@ -109,3 +109,28 @@ body{touch-action:manipulation}
 .multi-check{width:20px;height:20px;accent-color:var(--rose);flex:0 0 auto}
 .modal-open{overflow:hidden}
 @media(max-width:430px){.precision-hud{left:10px;right:10px;bottom:8px}.moving-status-grid{grid-template-columns:repeat(2,1fr)}.selection-tray{max-width:calc(100% - 18px);overflow-x:auto;justify-content:flex-start;-webkit-overflow-scrolling:touch}}
+
+
+/* Dango Build 5 — balanced navigation + reliable feature drawer */
+:root{--nav-h:74px}
+.bottom-nav{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:0;padding-inline:max(6px,env(safe-area-inset-left)) max(6px,env(safe-area-inset-right))}
+.bottom-nav button{min-width:0;min-height:54px;border-radius:14px;transition:background .16s ease,transform .16s ease}
+.bottom-nav button:not(.nav-add):active{background:var(--pink-3)}
+.bottom-nav button.active:not(.nav-add){background:linear-gradient(180deg,transparent,var(--pink-3))}
+.bottom-nav .nav-add{grid-column:3;width:54px;height:54px;border-radius:19px;align-self:center;box-shadow:0 9px 22px rgba(216,108,138,.28)}
+.bottom-nav .nav-add:active{transform:scale(.96)}
+.drawer{width:min(90vw,370px)}
+.drawer-scroll{padding-bottom:calc(24px + var(--safe-bottom));overscroll-behavior:contain}
+.drawer-section button{width:100%;cursor:pointer;position:relative}
+.drawer-section button:focus-visible{outline:2px solid var(--pink);outline-offset:1px}
+.current-room-only.is-disabled{opacity:.72;pointer-events:auto!important}
+.current-room-only.is-disabled .drawer-label:after{content:' • create a room to use';text-transform:none;letter-spacing:0;font-weight:700;color:#b99da5}
+.drawer-section button[data-needs-room="true"]:after{content:'›';margin-left:auto;color:#c6aeb5;font-size:18px}
+body.drawer-open{overflow:hidden}
+body.modal-open{overflow:hidden}
+.feature-hub-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.feature-hub-card{border:1px solid var(--line);background:#fff;border-radius:16px;padding:13px;text-align:left;display:grid;gap:5px;min-height:88px;align-content:center}
+.feature-hub-card .icon{font-size:23px}.feature-hub-card b{font-size:12px}.feature-hub-card small{font-size:9px;color:var(--muted);line-height:1.4}
+.tool-section-title{margin:14px 0 7px;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#9a7d86;font-weight:900}
+.compact-stat{display:flex;justify-content:space-between;gap:8px;padding:10px 12px;border:1px solid var(--line);border-radius:13px;background:#fff}.compact-stat span{font-size:10px;color:var(--muted)}.compact-stat b{font-size:11px;text-align:right}
+@media(max-width:360px){.bottom-nav{padding-inline:2px}.bottom-nav button{font-size:17px}.bottom-nav button span{font-size:9px}.bottom-nav .nav-add{width:50px;height:50px}.feature-hub-grid{grid-template-columns:1fr 1fr}}

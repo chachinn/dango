@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Dango — Room Layout Planner",
+  "name": "Dango \u2014 Room Layout Planner",
   "short_name": "Dango",
-  "description": "A mobile-first 2D room and moving planner for real measurements, custom room shapes, furniture layouts, doors, windows, clearances, fit checks and whole-home organization.",
+  "description": "A production-style mobile-first 2D room planner with exact measurements, custom room shapes, furniture layouts, doors, windows, clearances, fit tools, moving planning and whole-home organization.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

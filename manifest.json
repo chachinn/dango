@@ -2,18 +2,39 @@
   "id": "./",
   "name": "Dango — Room Layout Planner",
   "short_name": "Dango",
-  "description": "A simple, visual 2D room planner for arranging furniture, doors, windows, clearances, zones and room fixtures with real measurements.",
+  "description": "A mobile-first 2D room and moving planner for real measurements, custom room shapes, furniture layouts, doors, windows, clearances, fit checks and whole-home organization.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "display_override": ["standalone"],
+  "display_override": [
+    "standalone"
+  ],
   "orientation": "any",
   "background_color": "#fff8fa",
   "theme_color": "#f7a8bd",
-  "categories": ["utilities", "lifestyle", "productivity"],
+  "categories": [
+    "utilities",
+    "lifestyle",
+    "productivity"
+  ],
   "icons": [
-    {"src":"icon/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
-    {"src":"icon/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
-    {"src":"icon/icon-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+    {
+      "src": "icon/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
